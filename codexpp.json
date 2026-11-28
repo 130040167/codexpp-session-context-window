@@ -1,7 +1,7 @@
 {
   "id": "session-context-window",
   "name": "会话上下文调节",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "点击上下文圆环，即可调整当前会话中所选模型的上下文窗口，或恢复模型的默认值。",
   "engines": {
     "codexpp": 1

@@ -1,5 +1,6 @@
-codexPlus.extension({ inject: { 'codexpp.sessionContext': { required: false }, 'codexpp.usage': { required: false } }, apply(ctx) {
-  const api = ctx.get('codexpp.sessionContext');
+codexPlus.extension({ inject: { sessionContext: { required: false }, 'codexpp.sessionContext': { required: false }, 'codexpp.usage': { required: false } }, apply(ctx) {
+  const currentApi = ctx.get('sessionContext');
+  const api = currentApi ?? ctx.get('codexpp.sessionContext');
   if (!api) return;
   const zh = () => (ctx.locale.current || document.documentElement.lang || 'en').startsWith('zh');
   const t = (cn, en) => zh() ? cn : en;
@@ -80,7 +81,11 @@ codexPlus.extension({ inject: { 'codexpp.sessionContext': { required: false }, '
     };
     const apply = async (value) => {
       sync(true); error.hidden = true;
-      try { await api.set(selected.threadId, selected.model, value); if (panel === dialog) close(); }
+      try {
+        const result = await api.set(selected.threadId, selected.model, value);
+        if (result?.status === 'deferred') ctx.toast(t('已保存，下次发送前应用。', 'Saved. Applies before the next message.'));
+        if (panel === dialog) close();
+      }
       catch (reason) { if (panel === dialog) { showError(reason); sync(false); } }
     };
     input.oninput = () => {
@@ -208,7 +213,7 @@ codexPlus.extension({ inject: { 'codexpp.sessionContext': { required: false }, '
     if (event.key === 'Escape') { event.preventDefault(); close(); }
   }, true);
   ctx.listen(window, 'focus', () => { void api.refresh().then(paint).catch((reason) => ctx.fail(reason)); });
-  ctx.on('session-context/changed', paint);
+  ctx.on(currentApi ? 'sessionContext/changed' : 'session-context/changed', paint);
   ctx.onScan(paint, { phase: 'light' });
   paint();
 } });
